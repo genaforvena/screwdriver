@@ -46,6 +46,7 @@ impl AudioParams {
 
 pub struct AudioEngine {
     pub params: Arc<AudioParams>,
+    pub device_sample_rate: u32,
     _stream: cpal::Stream,
 }
 
@@ -129,6 +130,7 @@ impl AudioEngine {
 
         Ok(Self {
             params,
+            device_sample_rate,
             _stream: stream,
         })
     }

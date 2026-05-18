@@ -50,6 +50,7 @@ impl App {
         let waveform_rms = compute_rms(&decoded_arc, 200);
 
         let engine = AudioEngine::new(Arc::clone(&decoded_arc), sample_rate)?;
+        let sample_rate_mismatch = engine.device_sample_rate != sample_rate;
 
         let state = AppState {
             pitch: 0.0,
@@ -67,7 +68,7 @@ impl App {
             clip_counter: 0,
             status_msg: None,
             waveform_rms,
-            sample_rate_mismatch: false,
+            sample_rate_mismatch,
         };
 
         Ok(Self {
@@ -195,14 +196,20 @@ impl App {
             }
 
             KeyCode::Char('s') => {
-                self.save_clip()?;
+                if let Err(e) = self.save_clip() {
+                    self.state.status_msg = Some((format!("error: {e}"), Instant::now()));
+                }
             }
 
             KeyCode::Char('n') => {
-                self.next_file(1)?;
+                if let Err(e) = self.next_file(1) {
+                    self.state.status_msg = Some((format!("error: {e}"), Instant::now()));
+                }
             }
             KeyCode::Char('p') => {
-                self.next_file(-1)?;
+                if let Err(e) = self.next_file(-1) {
+                    self.state.status_msg = Some((format!("error: {e}"), Instant::now()));
+                }
             }
 
             // Presets
@@ -244,8 +251,8 @@ impl App {
         let out_pt = self.state.out_point.unwrap_or(self.state.duration_secs);
 
         let source = self.state.files[self.state.file_idx].clone();
-        self.state.clip_counter += 1;
-        let filename = format!("clip_{:03}.wav", self.state.clip_counter);
+        let next_counter = self.state.clip_counter + 1;
+        let filename = format!("clip_{:03}.wav", next_counter);
         let out_path = std::path::Path::new(&filename).to_path_buf();
 
         let clip = Clip {
@@ -258,6 +265,8 @@ impl App {
 
         save_clip(&clip, &self.decoded, self.sample_rate, &out_path)?;
 
+        // Only advance counter after a successful write.
+        self.state.clip_counter = next_counter;
         let msg = format!("saved → {filename}");
         tracing::info!("{msg}");
         self.state.status_msg = Some((msg, Instant::now()));
@@ -290,6 +299,7 @@ impl App {
         let decoded_arc = Arc::new(audio.samples);
         self.decoded = Arc::clone(&decoded_arc);
         self.engine = AudioEngine::new(decoded_arc, self.sample_rate)?;
+        self.state.sample_rate_mismatch = self.engine.device_sample_rate != self.sample_rate;
 
         // Re-apply current params
         let params = &self.engine.params;

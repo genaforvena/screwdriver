@@ -1,0 +1,28 @@
+[package]
+name = "screwdriver"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "screwdriver"
+path = "src/main.rs"
+
+[dependencies]
+cpal = "0.15"
+symphonia = { version = "0.5", features = ["all"] }
+ringbuf = "0.4"
+atomic_float = "1.0"
+ratatui = "0.29"
+crossterm = "0.28"
+hound = "3.5"
+anyhow = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+[build-dependencies]
+pkg-config = "0.3"
+
+[profile.release]
+opt-level = 3

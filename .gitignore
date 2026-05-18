@@ -1,4 +1,4 @@
 /target
 *.wav.out
 *.flac.out
-session/
+/session/

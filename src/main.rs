@@ -13,17 +13,26 @@ use crossterm::{
 };
 use std::io::stdout;
 use std::path::PathBuf;
-use tracing_appender::rolling;
 use tracing_subscriber::EnvFilter;
 
 fn main() -> Result<()> {
     // Set up file logging (never write to stdout — ratatui owns it)
     let log_dir = dirs_or_fallback();
-    let file_appender = rolling::never(&log_dir, "screwdriver.log");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    let log_path = log_dir.join("screwdriver.log");
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+        .unwrap_or_else(|_| {
+            std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("screwdriver.log")
+                .expect("failed to open log file")
+        });
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive(tracing::Level::INFO.into()))
-        .with_writer(non_blocking)
+        .with_writer(std::sync::Mutex::new(log_file))
         .with_ansi(false)
         .init();
 

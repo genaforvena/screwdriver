@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 pub fn render(f: &mut Frame, state: &AppState) {
-    let area = f.area();
+    let area = f.size();
 
     // Outer: top bar / center / bottom bar
     let rows = Layout::default()

@@ -1,6 +1,6 @@
 # screwdriver
 
-A real-time terminal audio tool for chopped & screwed style experimentation.
+A real-time terminal audio workbench for chopped & screwed style experimentation.
 Written in Rust. No GUI, no mouse — just keypresses and sound.
 
 ## What it does
@@ -16,18 +16,15 @@ Written in Rust. No GUI, no mouse — just keypresses and sound.
 Ubuntu 22.04+ (or WSL2) with PipeWire or PulseAudio.
 
 ```bash
-sudo apt install libasound2-dev libclang-dev librubberband-dev pkg-config
+sudo apt install libasound2-dev librubberband2 pkg-config
 ```
 
-Verify rubberband is found:
-```bash
-pkg-config --libs rubberband   # should print: -lrubberband
-```
+`librubberband-dev` is not required — the build links against the runtime library directly.
 
 ## Build
 
 ```bash
-git clone <repo>
+git clone https://github.com/genaforvena/screwdriver.git
 cd screwdriver
 cargo build --release
 ```
@@ -75,7 +72,7 @@ Saved clips go to the current directory as `clip_001.wav`, `clip_002.wav`, etc.
 [processing thread]
   - reads chunks from decoded buffer
   - calls rubberband pitch/tempo on each chunk
-  - writes output to ring buffer
+  - writes to ring buffer
         │
         ▼
 [ring buffer: ~0.5s of processed audio]
@@ -84,5 +81,8 @@ Saved clips go to the current directory as `clip_001.wav`, `clip_002.wav`, etc.
 [cpal callback] → speakers
 ```
 
-Parameter changes (↑↓←→) go from TUI → atomics → processing thread, so
-there is a small lag (~0.5s) between turning a knob and hearing the change.
+Parameter changes (↑↓←→) go from TUI → atomics → processing thread.
+There is a small lag (~0.5s) between turning a knob and hearing the change.
+
+Saving a clip (`s`) renders the in/out region offline through rubberband
+(study pass + process pass) for the best possible quality.

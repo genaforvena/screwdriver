@@ -12,14 +12,18 @@ cpal = "0.15"
 symphonia = { version = "0.5", features = ["all"] }
 ringbuf = "0.4"
 atomic_float = "1.0"
-ratatui = "0.29"
-crossterm = "0.28"
+ratatui = "0.26"
+crossterm = "0.27"
 hound = "3.5"
 anyhow = "1.0"
-thiserror = "2.0"
+thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing-appender = "0.2"
+
+# Pin transitive deps whose latest patch requires rustc > 1.75 (current system Rust).
+strum = "=0.26.0"
+strum_macros = "=0.26.0"
+unicode-segmentation = ">=1.0, <1.13"  # 1.13+ requires rustc 1.85
 
 [build-dependencies]
 pkg-config = "0.3"

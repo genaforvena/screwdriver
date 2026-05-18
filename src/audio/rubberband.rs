@@ -31,6 +31,12 @@ extern "C" {
     ) -> usize;
     fn rubberband_get_preferred_start_pad(state: RubberBandState) -> usize;
     fn rubberband_get_start_delay(state: RubberBandState) -> usize;
+    fn rubberband_study(
+        state: RubberBandState,
+        input: *const *const f32,
+        samples: usize,
+        is_final: i32,
+    );
 }
 
 pub struct RubberBand {
@@ -67,6 +73,25 @@ impl RubberBand {
 
     pub fn preferred_start_pad(&self) -> usize {
         unsafe { rubberband_get_preferred_start_pad(self.state) }
+    }
+
+    /// Study pass for offline mode — must be called before process_interleaved when using OPTION_PROCESS_OFFLINE.
+    pub fn study_interleaved(&self, interleaved: &[f32], is_final: bool) {
+        let frames = interleaved.len() / self.channels;
+        let mut channels: Vec<Vec<f32>> =
+            (0..self.channels).map(|_| vec![0.0f32; frames]).collect();
+        for (i, &s) in interleaved.iter().enumerate() {
+            channels[i % self.channels][i / self.channels] = s;
+        }
+        let ptrs: Vec<*const f32> = channels.iter().map(|c| c.as_ptr()).collect();
+        unsafe {
+            rubberband_study(
+                self.state,
+                ptrs.as_ptr(),
+                frames,
+                if is_final { 1 } else { 0 },
+            );
+        }
     }
 
     /// Process interleaved stereo input. De-interleaves, feeds rubberband, does NOT retrieve.
